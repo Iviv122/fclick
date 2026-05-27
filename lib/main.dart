@@ -47,7 +47,7 @@ class _MyHomePageState extends State<MyHomePage> {
   int _speed = 0;
   bool _turnedOn = false;
 
-  void _toggle(){
+  void _toggle() {
     setState(() {
       _turnedOn = !_turnedOn;
     });
@@ -58,7 +58,6 @@ class _MyHomePageState extends State<MyHomePage> {
       _speed = newSpeed;
     });
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -79,8 +78,7 @@ class _MyHomePageState extends State<MyHomePage> {
               inputFormatters: <TextInputFormatter>[
                 FilteringTextInputFormatter.digitsOnly,
               ],
-              onChanged: (value) =>
-                  _setSpeed(value.isEmpty ? 0 : (int.tryParse(value) ?? 0)),
+              onChanged: (value) => _setSpeed(int.tryParse(value) ?? 0),
             ),
           ],
         ),
@@ -88,7 +86,9 @@ class _MyHomePageState extends State<MyHomePage> {
       floatingActionButton: FloatingActionButton(
         onPressed: () => _toggle(),
         tooltip: 'Increment',
-        child: (_turnedOn) ? const Icon(Icons.stop) : const Icon(Icons.play_arrow),
+        child: (_turnedOn)
+            ? const Icon(Icons.stop)
+            : const Icon(Icons.play_arrow),
       ),
     );
   }
