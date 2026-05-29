@@ -47,9 +47,15 @@ class _MyHomePageState extends State<MyHomePage> {
   int _speed = 0;
   bool _turnedOn = false;
 
-  void _toggle() {
+  void _turnOn() {
     setState(() {
-      _turnedOn = !_turnedOn;
+      _turnedOn = true;
+    });
+  }
+
+  void _turnOff() {
+    setState(() {
+      _turnedOn = false;
     });
   }
 
@@ -70,8 +76,29 @@ class _MyHomePageState extends State<MyHomePage> {
         child: Column(
           mainAxisAlignment: .center,
           children: [
-            const Text('Your current speed:'),
-            Text('$_speed', style: Theme.of(context).textTheme.headlineMedium),
+            Wrap(
+              spacing: 15,
+              children: [
+                Column(
+                  children: [
+                    const Text('Your current speed:'),
+                    Text(
+                      '${(_speed > 0) ? (1000/_speed).toStringAsFixed(2) : 0} clicks/sec',
+                      style: Theme.of(context).textTheme.headlineMedium,
+                    ),
+                  ],
+                ),
+                Column(
+                  children: [
+                    const Text('Your current state:'),
+                    Text(
+                      '$_turnedOn',
+                      style: Theme.of(context).textTheme.headlineMedium,
+                    ),
+                  ],
+                ),
+              ],
+            ),
             TextField(
               decoration: InputDecoration(labelText: "Enter speed (ms/click)"),
               keyboardType: TextInputType.number,
@@ -80,15 +107,23 @@ class _MyHomePageState extends State<MyHomePage> {
               ],
               onChanged: (value) => _setSpeed(int.tryParse(value) ?? 0),
             ),
+            Row(
+              mainAxisAlignment: .center,
+              children: [
+                IconButton(
+                  onPressed: () => _turnOn(),
+                  icon: const Icon(Icons.play_arrow),
+                  tooltip: "Start",
+                ),
+                IconButton(
+                  onPressed: () => _turnOff(),
+                  icon: const Icon(Icons.stop),
+                  tooltip: "Stop",
+                ),
+              ],
+            ),
           ],
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _toggle(),
-        tooltip: 'Increment',
-        child: (_turnedOn)
-            ? const Icon(Icons.stop)
-            : const Icon(Icons.play_arrow),
       ),
     );
   }
