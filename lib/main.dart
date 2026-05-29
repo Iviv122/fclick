@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:bixat_key_mouse/bixat_key_mouse.dart';
@@ -45,18 +47,41 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   int _speed = 0;
+  int _clicks = 0;
+  Timer? _timer;
+  final Stopwatch _stopwatch = Stopwatch();
   bool _turnedOn = false;
 
   void _turnOn() {
     setState(() {
       _turnedOn = true;
+      _clicks = 0;
     });
+    _timer = Timer.periodic(Duration(milliseconds: _speed), click);
+
+    _stopwatch.reset();
+    _stopwatch.start();
   }
 
   void _turnOff() {
     setState(() {
       _turnedOn = false;
+      _clicks = _clicks;
     });
+    if (_timer != null) {
+      _timer?.cancel();
+      _timer = null;
+      _stopwatch.stop();
+    }
+  }
+
+  void click(Timer timer) {
+    if (!_turnedOn) return;
+    _clicks += 1;
+    BixatKeyMouse.pressMouseButton(
+      button: MouseButton.left,
+      direction: Direction.click,
+    );
   }
 
   void _setSpeed(int newSpeed) {
@@ -81,18 +106,27 @@ class _MyHomePageState extends State<MyHomePage> {
               children: [
                 Column(
                   children: [
-                    const Text('Your current speed:'),
+                    const Text('Your current state:'),
                     Text(
-                      '${(_speed > 0) ? (1000/_speed).toStringAsFixed(2) : 0} clicks/sec',
+                      '$_turnedOn',
                       style: Theme.of(context).textTheme.headlineMedium,
                     ),
                   ],
                 ),
                 Column(
                   children: [
-                    const Text('Your current state:'),
+                    const Text('AVG clicks (after stop):'),
                     Text(
-                      '$_turnedOn',
+                      '${_clicks}',
+                      style: Theme.of(context).textTheme.headlineMedium,
+                    ),
+                  ],
+                ),
+                Column(
+                  children: [
+                    const Text('Time passed:'),
+                    Text(
+                      '${_stopwatch.elapsed}',
                       style: Theme.of(context).textTheme.headlineMedium,
                     ),
                   ],
