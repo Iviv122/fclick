@@ -7,13 +7,13 @@ import 'package:bixat_key_mouse/bixat_key_mouse.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await BixatKeyMouse.initialize();
+
   runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -49,35 +49,53 @@ class _MyHomePageState extends State<MyHomePage> {
   int _speed = 0;
   int _clicks = 0;
   Timer? _timer;
-  final Stopwatch _stopwatch = Stopwatch();
   bool _turnedOn = false;
+  final Stopwatch _stopwatch = Stopwatch();
+
+  int _lastTimerSpeed = 0;
+
+  void _startTimer() {
+    _timer?.cancel();
+    if (_speed <= 0) return;
+    _timer = Timer.periodic(Duration(milliseconds: _speed), _click);
+  }
+
+  void _stopTimer() {
+    _timer?.cancel();
+    _timer = null;
+    _stopwatch.stop();
+  }
 
   void _turnOn() {
-    setState(() {
-      _turnedOn = true;
-      _clicks = 0;
-    });
-    _timer = Timer.periodic(Duration(milliseconds: _speed), click);
+    if (_turnedOn) return;
+
+    _turnedOn = true;
+    _clicks = 0;
+    _lastTimerSpeed = _speed;
+
+    setState(() {});
 
     _stopwatch.reset();
     _stopwatch.start();
+
+    _startTimer();
   }
 
   void _turnOff() {
-    setState(() {
-      _turnedOn = false;
-      _clicks = _clicks;
-    });
-    if (_timer != null) {
-      _timer?.cancel();
-      _timer = null;
-      _stopwatch.stop();
-    }
+    if (!_turnedOn) return;
+
+    _turnedOn = false;
+
+    setState(() {});
+
+    _stopTimer();
   }
 
-  void click(Timer timer) {
+  void _click(Timer timer) {
     if (!_turnedOn) return;
-    _clicks += 1;
+
+    _clicks++;
+
     BixatKeyMouse.pressMouseButton(
       button: MouseButton.left,
       direction: Direction.click,
@@ -85,9 +103,22 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void _setSpeed(int newSpeed) {
-    setState(() {
-      _speed = newSpeed;
-    });
+    if (_speed == newSpeed) return;
+
+    _speed = newSpeed;
+
+    if (_turnedOn && _speed != _lastTimerSpeed) {
+      _lastTimerSpeed = _speed;
+      _startTimer();
+    } else {
+      setState(() {});
+    }
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
   }
 
   @override
@@ -115,7 +146,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 ),
                 Column(
                   children: [
-                    const Text('AVG clicks (after stop):'),
+                    const Text('Clicks (after stop):'),
                     Text(
                       '${_clicks}',
                       style: Theme.of(context).textTheme.headlineMedium,
