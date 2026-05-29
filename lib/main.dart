@@ -164,14 +164,23 @@ class _MyHomePageState extends State<MyHomePage> {
                 ),
               ],
             ),
-            TextField(
-              decoration: InputDecoration(labelText: "Enter speed (ms/click)"),
-              keyboardType: TextInputType.number,
-              inputFormatters: <TextInputFormatter>[
-                FilteringTextInputFormatter.digitsOnly,
-              ],
-              onChanged: (value) => _setSpeed(int.tryParse(value) ?? 0),
+            Align(
+              alignment: Alignment.center,
+              child: Container(
+                width: MediaQuery.of(context).size.width * 0.5,
+                child: TextField(
+                  decoration: InputDecoration(
+                    labelText: "Enter speed (ms/click)",
+                  ),
+                  keyboardType: TextInputType.number,
+                  inputFormatters: <TextInputFormatter>[
+                    FilteringTextInputFormatter.digitsOnly,
+                  ],
+                  onChanged: (value) => _setSpeed(int.tryParse(value) ?? 0),
+                ),
+              ),
             ),
+
             Row(
               mainAxisAlignment: .center,
               children: [
