@@ -97,15 +97,28 @@ jobs:
         with:
           name: macos-release
           path: macos-app.zip
-
   release:
     needs: [build-linux, build-windows, build-macos]
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/')
     steps:
-      - uses: actions/download-artifact@v4
+      - name: Download Linux artifact
+        uses: actions/download-artifact@v4
         with:
-          path: artifacts
+          name: linux-release
+          path: artifacts/linux-release
+      
+      - name: Download Windows artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: windows-release
+          path: artifacts/windows-release
+      
+      - name: Download macOS artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: macos-release
+          path: artifacts/macos-release
       
       - name: Create Release
         uses: softprops/action-gh-release@v1
