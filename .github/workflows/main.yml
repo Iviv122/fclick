@@ -3,131 +3,156 @@ name: Flutter Desktop Build & Release
 on:
   push:
     tags:
-      - 'v*'
+      - 'v*.*.*'
   workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version'
+        required: true
+        default: 'v1.0.0'
+
+# Global setting to use Node.js 24
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
   build-linux:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
       
       - name: Install Linux dependencies
         run: |
-          sudo apt-get update
-          sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev
+          sudo apt-get update -y
+          sudo apt-get install -y \
+            clang \
+            cmake \
+            ninja-build \
+            pkg-config \
+            libgtk-3-dev \
+            liblzma-dev \
+            libstdc++-12-dev
       
-      - uses: subosito/flutter-action@v2
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
           cache: true
       
-      - name: Setup Flutter
+      - name: Configure and build
         run: |
           flutter config --enable-linux-desktop
           flutter pub get
           flutter doctor -v
+          flutter build linux --release
       
-      - name: Build Linux
-        run: flutter build linux --release
-      
-      - name: Create Linux archive
+      - name: Create archive
         run: |
           cd build/linux/x64/release/bundle
           tar -czf $GITHUB_WORKSPACE/linux-app.tar.gz *
       
-      - uses: actions/upload-artifact@v4
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
         with:
           name: linux-release
           path: linux-app.tar.gz
+          retention-days: 1
+          if-no-files-found: error
 
   build-windows:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
       
-      - uses: subosito/flutter-action@v2
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
           cache: true
       
-      - name: Setup Flutter
+      - name: Configure and build
         run: |
           flutter config --enable-windows-desktop
           flutter pub get
           flutter doctor -v
+          flutter build windows --release
       
-      - name: Build Windows
-        run: flutter build windows --release
-      
-      - name: Create Windows archive
+      - name: Create archive
         run: |
           Compress-Archive -Path build/windows/x64/runner/Release/* -DestinationPath windows-app.zip
       
-      - uses: actions/upload-artifact@v4
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
         with:
           name: windows-release
           path: windows-app.zip
+          retention-days: 1
+          if-no-files-found: error
 
   build-macos:
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
       
-      - uses: subosito/flutter-action@v2
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
           cache: true
       
-      - name: Setup Flutter
+      - name: Configure and build
         run: |
           flutter config --enable-macos-desktop
           flutter pub get
           flutter doctor -v
+          flutter build macos --release
       
-      - name: Build macOS
-        run: flutter build macos --release
-      
-      - name: Create macOS archive
+      - name: Create archive
         run: |
           cd build/macos/Build/Products/Release
           zip -r $GITHUB_WORKSPACE/macos-app.zip *.app
       
-      - uses: actions/upload-artifact@v4
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
         with:
           name: macos-release
           path: macos-app.zip
+          retention-days: 1
+          if-no-files-found: error
+
   release:
     needs: [build-linux, build-windows, build-macos]
     runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/')
+    permissions:
+      contents: write
     steps:
       - name: Download Linux artifact
         uses: actions/download-artifact@v4
         with:
           name: linux-release
-          path: artifacts/linux-release
       
       - name: Download Windows artifact
         uses: actions/download-artifact@v4
         with:
           name: windows-release
-          path: artifacts/windows-release
       
       - name: Download macOS artifact
         uses: actions/download-artifact@v4
         with:
           name: macos-release
-          path: artifacts/macos-release
       
-      - name: Create Release
-        uses: softprops/action-gh-release@v1
+      - name: Display downloaded files
+        run: ls -lah
+      
+      - name: Create GitHub Release
+        uses: ncipollo/release-action@v1
         with:
-          files: |
-            artifacts/linux-release/linux-app.tar.gz
-            artifacts/windows-release/windows-app.zip
-            artifacts/macos-release/macos-app.zip
+          artifacts: "*.tar.gz,*.zip"
+          tag: ${{ github.ref_name || github.event.inputs.version }}
+          name: Release ${{ github.ref_name || github.event.inputs.version }}
           draft: false
-          prerelease: false
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          generateReleaseNotes: true
+          token: ${{ secrets.GITHUB_TOKEN }}
