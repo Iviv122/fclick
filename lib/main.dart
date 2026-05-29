@@ -148,7 +148,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   children: [
                     const Text('Clicks (after stop):'),
                     Text(
-                      '${_clicks}',
+                      '$_clicks',
                       style: Theme.of(context).textTheme.headlineMedium,
                     ),
                   ],
